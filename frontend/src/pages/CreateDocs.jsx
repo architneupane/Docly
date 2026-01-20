@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import JoditEditor from "jodit-react";
-import 
 import Navbar from "../components/Navbar";
 import { api_base_url } from "./Helper";
 import "../App.css";
