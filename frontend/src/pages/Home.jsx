@@ -12,6 +12,7 @@ function Home() {
   const [data, setdata] = useState([]);
   const [title, setTitle] = useState("");
   const [setError] = useState("");
+  const userId = sessionStorage.getItem("userId");
 
   const navigate = useNavigate();
 
@@ -27,12 +28,11 @@ function Home() {
         },
         body: JSON.stringify({
           docName: title,
-          userId: localStorage.getItem("userId"),
+          userId,
         }),
       })
         .then((res) => res.json())
         .then((data) => {
-          console.log(data); // Check what data looks like
           if (data.success) {
             setIsCreateModelShow(false);
             navigate(`/createDocs/${data.docId}`);
@@ -40,33 +40,32 @@ function Home() {
             setError(data.message);
           }
         });
-  
     }
   };
 
   const getData = () => {
-    fetch(`${api_base_url}/getAllDocs`,{
-      mode: 'cors',
-      method: 'post',
-      headers:{
-        'content-type':'application/json'
+    fetch(`${api_base_url}/getAllDocs`, {
+      mode: "cors",
+      method: "post",
+      headers: {
+        "content-type": "application/json",
       },
       body: JSON.stringify({
-        userId: localStorage.getItem('userId')
-      })
+        userId,
+      }),
     })
-    .then((res)=>res.json())
-    .then((data=>{
-      setdata(data.docs)
-    }))
-  }
+      .then((res) => res.json())
+      .then((data) => {
+        setdata(data.docs);
+      });
+  };
 
-  useEffect(()=>{
+  useEffect(() => {
+    if (!userId) {
+      navigate("/login");
+    }
     getData();
-  },[])
-
-
-  
+  }, []);
 
   return (
     <div className="w-full h-screen bg-zinc-800 text-white">
@@ -83,11 +82,11 @@ function Home() {
             setIsCreateModelShow(true);
             // it directly gives user to type in tile box without click on title box
             setTimeout(() => {
-              const titleInput = document.getElementById('title');
+              const titleInput = document.getElementById("title");
               if (titleInput) {
                 titleInput.focus();
               } else {
-                console.error('Title input not found');
+                console.error("Title input not found");
               }
             }, 0);
           }}
@@ -103,16 +102,14 @@ function Home() {
 
       {/* all documents */}
       <div>
-  {
-    data ? data.map((el, index) => {
-      return (
-        <Docs key={el.id || index} docs={el} id={`doc-${index + 1}`} />
-      );
-    }) : ""
-  }
-</div>
-
-
+        {data
+          ? data.map((el, index) => {
+              return (
+                <Docs key={el.id || index} docs={el} id={`doc-${index + 1}`} />
+              );
+            })
+          : ""}
+      </div>
 
       {/* ternary operator that do, if isCreateModelShow true then show title box if false then nothing  */}
       {isCreateModelShow ? (
@@ -141,7 +138,6 @@ function Home() {
                   id="title"
                 />
               </div>
-
               {/* containing create and cancel buttons */}
               <div className="flex ">
                 <button
@@ -170,8 +166,6 @@ function Home() {
       ) : (
         ""
       )}
-
-
     </div>
   );
 }

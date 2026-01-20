@@ -28,9 +28,9 @@ function Login() {
       .then((res) => res.json())
       .then((data) => {
         if (data.success === true) {
-          localStorage.setItem("token", data.token);
-          localStorage.setItem("isLoggedIn", true);
-          localStorage.setItem("userId", data.userId);
+          sessionStorage.setItem("token", data.token);
+          sessionStorage.setItem("isLoggedIn", true);
+          sessionStorage.setItem("userId", data.userId);
           navigate("/");
         } else {
           setError(data.message);

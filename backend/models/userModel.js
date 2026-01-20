@@ -1,6 +1,36 @@
 var mongoose = require("mongoose");
+var dotenv = require('dotenv')
 
-mongoose.connect("mongodb://127.0.0.1:27017/dairynotes");
+dotenv.config({path: "./.env"})
+
+const mongoUri = process.env.MONGODB_URL;
+
+// connect with promise + logging
+mongoose
+  .connect(mongoUri, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+  .then(() => {
+    console.log("MongoDB connected:", mongoUri);
+  })
+  .catch((err) => {
+    console.error("MongoDB connection error:", err);
+  });
+
+// connection event handlers
+mongoose.connection.on("connected", () => {
+  console.log("Mongoose event: connected");
+});
+mongoose.connection.on("error", (err) => {
+  console.error("Mongoose event: error ->", err);
+});
+mongoose.connection.on("disconnected", () => {
+  console.warn("Mongoose event: disconnected");
+});
+mongoose.connection.on("reconnected", () => {
+  console.log("Mongoose event: reconnected");
+});
 
 const userSchema = mongoose.Schema({
   name: String,

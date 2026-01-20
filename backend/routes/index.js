@@ -1,11 +1,9 @@
 var express = require("express");
 var router = express.Router();
 var userModel = require("../models/userModel");
-var docModel = require('../models/docModel')
+var docModel = require("../models/docModel");
 var bcrypt = require("bcrypt");
 var jwt = require("jsonwebtoken");
-
-const secret = "secret";
 
 /* GET home page. */
 router.get("/", function (req, res, next) {
@@ -49,7 +47,7 @@ router.post("/login", async (req, res) => {
   if (user) {
     bcrypt.compare(password, user.password, function (err, result) {
       if (result) {
-        var token = jwt.sign({ email: user.email, userId: user._id }, secret);
+        var token = jwt.sign({ email: user.email, userId: user._id }, process.env.JWT_SECRET);
         res.json({
           success: true,
           message: "Login successful",
@@ -66,106 +64,135 @@ router.post("/login", async (req, res) => {
 });
 
 // route to create new document
-router.post('/createDocs', async (req,res)=>{
-  let {userId, docName} = req.body
-  let user = await userModel.findOne({_id: userId})
-  if (user){
+router.post("/createDocs", async (req, res) => {
+  let { userId, docName } = req.body;
+  let user = await userModel.findOne({ _id: userId });
+  if (user) {
     let docs = await docModel.create({
       uploadedBy: userId,
       title: docName,
-    })
+    });
     // route handler function
-    return res.json({success: true, message:'Document created successfully ', docId:docs._id})
+    return res.json({
+      success: true,
+      message: "Document created successfully ",
+      docId: docs._id,
+    });
+  } else {
+    return res.json({ success: false, message: "Invalid User" });
   }
-  else{
-    return res.json({success: false, message:'Invalid User'})
-  }
-})
+});
 
 // route to update content on document
-router.post('/updateDoc', async(req,res)=>{
-  let{userId,docId,content} = req.body
-  let user = await userModel.findOne({_id:userId})
+router.post("/updateDoc", async (req, res) => {
+  let { userId, docId, content } = req.body;
+  let user = await userModel.findOne({ _id: userId });
   // if user true then doc find by id and updates
-  if(user){
-    let doc = await docModel.findOneAndUpdate({docId},{content})
-    console.log(docId);
-    return res.json({success:true, message:'Document uploaded successfully'})
+  if (user) {
+    let doc = await docModel.findOneAndUpdate(
+      { _id: docId },
+      { $set: { content } },
+      { new: true },
+    );
+    return res.json({
+      success: true,
+      message: "Document uploaded successfully",
+      doc,
+    });
   }
   // if user false then user was not formed or invalid
-  else{
-    return res.json({success:false, message:'Invalid user'})
+  else {
+    return res.json({ success: false, message: "Invalid user" });
   }
-})
+});
 
 // route to get new created document
-router.post('/getDoc', async (req,res)=>{
-  let{userId,docId} = req.body
-  let user = await userModel.findOne({_id:userId})
-  if(user){
-    let doc = await docModel.findOne({_id:docId})
-    if(doc){
-      return res.json({sucess:true, message:'Document fetched successfully',doc:doc})
+router.post("/getDoc", async (req, res) => {
+  let { userId, docId } = req.body;
+  let user = await userModel.findOne({ _id: userId });
+  if (user) {
+    let doc = await docModel.findOne({ _id: docId });
+    if (doc) {
+      return res.json({
+        sucess: true,
+        message: "Document fetched successfully",
+        doc,
+      });
+    } else {
+      return res.json({ success: false, message: "Invalid document" });
     }
-    else{
-      return res.json({success:false, message:'Invalid document'})
-    }
+  } else {
+    return res.json({ success: false, message: "Invalid user" });
   }
-  else{
-    return res.json({success:false, message:'Invalid user'})
-  }
-})
+});
 
 // route to get user
-router.post('/getUser',async(req,res)=>{
-  let{userId} = req.body
-  let user = await userModel.findOne({_id:userId})
-  if(user){
-    return res.json({success:true,message:'User fetched successfully'})
+router.post("/getUser", async (req, res) => {
+  let { userId } = req.body;
+  let user = await userModel.findOne({ _id: userId });
+  if (user) {
+    return res.json({ success: true, message: "User fetched successfully", user });
+  } else {
+    return res.json({ success: false, message: "Invalid user" });
   }
-  else{
-    return res.json({success:false, message:'Invalid user'})
-  }
-})
+});
 
 //route to get all documents created by that user
-router.post('/getAllDocs', async(req,res)=>{
-  let {userId} = req.body
-  let user = await userModel.findOne({_id:userId})
-  if(user){
-    let docs = await docModel.find({uploadedBy:userId})
-    return res.json({success:true, message:"Document fetched successfully",docs:docs})
+router.post("/getAllDocs", async (req, res) => {
+  let { userId } = req.body;
+  let user = await userModel.findOne({ _id: userId });
+  if (user) {
+    let docs = await docModel.find({ uploadedBy: userId });
+    return res.json({
+      success: true,
+      message: "Document fetched successfully",
+      docs: docs,
+    });
+  } else {
+    return res.json({ success: false, message: "Invalid user" });
   }
-  else{
-    return res.json({success:false, message:'Invalid user'})
+});
+
+router.post("/openDoc", async (req, res) => {
+  let { userId, docId } = req.body;
+
+  let user = await userModel.findOne({ _id: userId });
+  if (user) {
+    let doc = await docModel.findOne({ _id: docId });
+    return res.json({
+      success: true,
+      message: "Document Found Successfully",
+      doc,
+    });
+  } else {
+    return res.json({ success: false, message: "Invalid User" });
   }
-})
+});
 
 // route to delete document by user
-router.post('/deleteDoc', async(req,res)=>{
-  let{userId,docId} = req.body
-  let user = await userModel.findOne({_id:userId})
-  if(user){
-    let doc = await docModel.findOneAndDelete({_id:docId})
-    return res.json({success: true, message: 'Document deleted successfully'})
+router.post("/deleteDoc", async (req, res) => {
+  let { userId, docId } = req.body;
+  let user = await userModel.findOne({ _id: userId });
+  if (user) {
+    let doc = await docModel.findOneAndDelete({ _id: docId });
+    return res.json({
+      success: true,
+      message: "Document deleted successfully",
+    });
+  } else {
+    return res.json({ success: false, message: "Invalid user" });
   }
-  else{
-   return res.json({success: false, message: 'Invalid user'})
-  }
-})
+});
 
 // route to logout user
-router.post('/logout', async(req,res)=>{
-  let{userId} = req.body
-  let user = await userModel.findOne({_id:userId})
-  if(user){
-    return res.json({success:true , message:'User logged out successfully'})
+router.post("/logout", async (req, res) => {
+  let { userId } = req.body;
+  let user = await userModel.findOne({ _id: userId });
+  if (user) {
+    return res.json({ success: true, message: "User logged out successfully" });
+  } else {
+    return res.json({ success: false, message: "Invalid user" });
   }
-  else{
-    return res.json({success:false, message: 'Invalid user'})
-  }
-})
-
-
+});
 
 module.exports = router;
